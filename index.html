@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Kviz: Stepski vuk</title>
+<style>
+  :root {
+    --bg: #14110f; --card: #1f1a17; --text: #efe6d8; --muted: #a39683;
+    --accent: #c9822b; --good: #5f9e6e; --bad: #b5524a; --border: #3a312b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 16px;
+    background: radial-gradient(circle at top, #2a211b 0%, var(--bg) 60%);
+    color: var(--text); font-family: Georgia, "Times New Roman", serif;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; }
+  .hidden { display: none !important; }
+  h1 { margin: 0 0 4px; color: var(--accent); letter-spacing: 1px; }
+  h3 { margin: 0 0 10px; color: var(--accent); }
+  .sub, .muted { color: var(--muted); }
+  .card, .panel {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  }
+  .center { max-width: 420px; margin: 8vh auto 0; text-align: center; }
+  input, select {
+    width: 100%; padding: 12px 14px; margin: 8px 0; font: inherit; font-size: 1.05rem;
+    background: #120f0d; color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .btn {
+    background: var(--accent); color: #1a120a; border: none; border-radius: 10px;
+    padding: 11px 18px; font: inherit; font-weight: bold; font-size: 1rem; cursor: pointer;
+  }
+  .btn:hover:not(:disabled) { filter: brightness(1.12); }
+  .btn:disabled { opacity: .35; cursor: default; }
+  .btn.big { display: block; width: 100%; margin: 10px 0; padding: 15px; font-size: 1.15rem; }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn.good { background: var(--good); color: #0e1a11; }
+  .btn.bad { background: var(--bad); color: #fff; }
+  .link { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; font: inherit; margin-top: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .me { font-size: 1.3rem; }
+  .pts { font-size: 2.2rem; color: var(--accent); }
+  .hearts { color: var(--bad); letter-spacing: 2px; }
+  .status { text-align: center; font-size: 1.2rem; min-height: 56px; margin: 10px 0; line-height: 1.4; }
+  .note { text-align: center; color: var(--bad); min-height: 24px; margin-top: 12px; }
+  .buzz {
+    display: block; margin: 10px auto; width: 230px; height: 230px; border-radius: 50%;
+    border: 6px solid #6d2f29; font: inherit; font-weight: bold; font-size: 1.6rem; color: #fff;
+    background: radial-gradient(circle at 35% 30%, #e05a48, #a02d22);
+    box-shadow: 0 10px 30px rgba(160,45,34,.5); cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .buzz:active:not(:disabled) { transform: scale(.96); }
+  .buzz:disabled { background: #3a312b; border-color: #2a2420; box-shadow: none; color: var(--muted); cursor: default; }
+  .buzz.hot:disabled { background: radial-gradient(circle at 35% 30%, #7bc08b, #3f8052); border-color: #2d5e3c; color: #fff; }
+  .lb .row-p {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 6px;
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .row-p .rank { width: 24px; color: var(--muted); }
+  .row-p .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-p .sc { font-weight: bold; color: var(--accent); min-width: 56px; text-align: right; }
+  .row-p .hrt { color: var(--bad); font-size: .85rem; letter-spacing: 1px; }
+  .row-p.cur { border-color: var(--accent); background: rgba(201,130,43,.12); }
+  .row-p.mine { background: rgba(255,255,255,.06); }
+  .row-p.outp { opacity: .45; }
+  .row-p.off .nm { font-style: italic; color: var(--muted); }
+  .tag { font-size: .75rem; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); }
+  .tag.now { background: var(--accent); color: #1a120a; border-color: var(--accent); }
+  .tag.out { color: var(--bad); border-color: var(--bad); }
+  .mini { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; cursor: pointer; font: inherit; }
+  .mini:hover { color: var(--text); border-color: var(--accent); }
+  .hgrid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: start; }
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: .85rem; border: 1px solid var(--border); color: var(--muted); }
+  .badge.open { background: var(--good); color: #0e1a11; border-color: var(--good); }
+  .badge.ready { color: var(--accent); border-color: var(--accent); }
+  .bigq { font-size: 1.5rem; line-height: 1.35; margin: 12px 0 6px; }
+  .ans { margin: 12px 0; padding: 10px 14px; border-left: 3px solid var(--good); background: rgba(95,158,110,.12); }
+  .buz { padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; }
+  .buz.first { border-color: var(--accent); background: rgba(201,130,43,.15); font-size: 1.4rem; }
+  .qi { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .qi.used { opacity: .4; }
+  .qi small { color: var(--accent); margin-left: 6px; }
+  .big-lb .row-p { font-size: 1.6rem; padding: 14px 18px; }
+  .big-lb .row-p .hrt { font-size: 1.1rem; }
+  .ctl { display: flex; gap: 4px; }
+  @media (max-width: 820px) { .hgrid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- POČETNI EKRAN -->
+  <div id="v-home" class="view card center">
+    <h1>Stepski vuk</h1>
+    <p class="sub">Kviz uživo</p>
+    <button class="btn big" onclick="go('pjoin')">Ja sam igrač</button>
+    <button class="btn big ghost" onclick="go('hlogin')">Ja sam host</button>
+    <button class="link" onclick="joinDisplay()">Samo lista (za projektor)</button>
+  </div>
+
+  <!-- IGRAČ: unos imena -->
+  <div id="v-pjoin" class="view card center hidden">
+    <h1>Igrač</h1>
+    <p class="sub">Upiši svoje ime</p>
+    <input id="pname" maxlength="20" placeholder="Ime" autocomplete="off" onkeydown="if(event.key==='Enter')joinPlayer()">
+    <button class="btn big" onclick="joinPlayer()">Uđi u igru</button>
+    <button class="link" onclick="go('home')">Nazad</button>
+  </div>
+
+  <!-- HOST: PIN -->
+  <div id="v-hlogin" class="view card center hidden">
+    <h1>Host</h1>
+    <p class="sub">Upiši PIN</p>
+    <input id="pin" type="password" placeholder="PIN" onkeydown="if(event.key==='Enter')joinHost()">
+    <button class="btn big" onclick="joinHost()">Uđi</button>
+    <button class="link" onclick="go('home')">Nazad</button>
+  </div>
+
+  <!-- IGRAČ: igra -->
+  <div id="v-player" class="view hidden" style="max-width:520px;margin:0 auto">
+    <div class="top">
+      <div><div class="me" id="pName"></div><div class="hearts" id="pLives"></div></div>
+      <div class="pts" id="pScore">0</div>
+    </div>
+    <div class="status" id="pStatus"></div>
+    <button id="buzz" class="buzz" onclick="buzz()">JAVI SE</button>
+    <div class="note" id="pNote"></div>
+    <div class="panel" style="margin-top:14px"><h3>Poredak</h3><div class="lb" id="pBoard"></div></div>
+    <button class="link" onclick="leave()">Izađi</button>
+  </div>
+
+  <!-- HOST: igra -->
+  <div id="v-host" class="view hidden">
+    <div class="top"><h1>Host</h1><button class="link" onclick="leave()">Izađi</button></div>
+    <div class="hgrid">
+      <div>
+        <div class="panel" id="hCur"></div>
+        <div class="panel">
+          <h3>Pitanja</h3>
+          <div id="hQs"></div>
+          <h3 style="margin-top:18px">Dodaj pitanje</h3>
+          <input id="nq" placeholder="Pitanje">
+          <input id="na" placeholder="Tačan odgovor">
+          <select id="np">
+            <option>100</option><option>200</option><option>300</option>
+            <option>400</option><option>500</option><option>1000</option>
+          </select>
+          <button class="btn" onclick="addQ()">Dodaj</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 id="hCount">Igrači</h3>
+        <div class="lb" id="hBoard"></div>
+        <div class="row">
+          <button class="btn ghost" onclick="if(confirm('Resetovati sve bodove, živote i pitanja?'))send('host:reset')">Reset igre</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIKAZ LISTE -->
+  <div id="v-display" class="view hidden">
+    <div class="top"><h1>Poredak</h1><div class="pts" id="dInfo" style="font-size:1.3rem"></div></div>
+    <div class="lb big-lb" id="dBoard"></div>
+    <button class="link" onclick="leave()">Izađi</button>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const send = (ev, ...a) => socket.emit(ev, ...a);
+
+let S = null, role = sessionStorage.getItem('qrole'), myId = sessionStorage.getItem('qid'), prevQ = 0;
+
+function go(v) {
+  document.querySelectorAll('.view').forEach(e => e.classList.add('hidden'));
+  $('#v-' + v).classList.remove('hidden');
+}
+function leave() { sessionStorage.clear(); location.reload(); }
+function clearRole() { sessionStorage.removeItem('qrole'); role = null; }
+
+// ---------- povezivanje ----------
+socket.on('connect', () => {
+  if (role === 'player') send('player:join', { name: sessionStorage.getItem('qname'), id: myId });
+  else if (role === 'host') send('host:join', sessionStorage.getItem('qpin'));
+  else if (role === 'display') { send('display:join'); go('display'); }
+});
+
+function joinPlayer() {
+  const name = $('#pname').value.trim();
+  if (!name) return;
+  role = 'player';
+  sessionStorage.setItem('qrole', 'player');
+  sessionStorage.setItem('qname', name);
+  send('player:join', { name, id: myId });
+}
+function joinHost() {
+  const pin = $('#pin').value;
+  role = 'host';
+  sessionStorage.setItem('qrole', 'host');
+  sessionStorage.setItem('qpin', pin);
+  send('host:join', pin);
+}
+function joinDisplay() {
+  role = 'display';
+  sessionStorage.setItem('qrole', 'display');
+  send('display:join');
+  go('display');
+  render();
+}
+
+socket.on('joined', d => {
+  myId = d.id;
+  sessionStorage.setItem('qid', d.id);
+  go('player');
+  render();
+});
+socket.on('host:ok', () => { go('host'); render(); });
+socket.on('host:bad', () => { clearRole(); alert('Pogrešan PIN.'); go('hlogin'); });
+socket.on('err', m => { clearRole(); alert(m); go('pjoin'); });
+
+socket.on('state', s => {
+  const ql = s.round.queue.length;
+  if (role === 'host' && ql === 1 && prevQ === 0) beep();
+  prevQ = ql;
+  S = s;
+  render();
+});
+
+function beep() {
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.25, c.currentTime);
+    o.start(); o.stop(c.currentTime + 0.25);
+  } catch (e) {}
+}
+
+// ---------- pomoćne ----------
+const nm = id => (S.players.find(p => p.id === id) || {}).name || '?';
+const hearts = p => '♥'.repeat(p.lives) + '♡'.repeat(Math.max(0, S.startLives - p.lives));
+const phaseName = { idle: 'Čeka se pitanje', ready: 'Pitanje spremno', open: 'Javljanje otvoreno', done: 'Završeno' };
+
+function lb(host) {
+  if (!S.players.length) return '<p class="muted">Još nema igrača.</p>';
+  const r = S.round;
+  return S.players.map((p, i) => {
+    const qi = r.queue.indexOf(p.id);
+    let tag = '';
+    if (p.out) tag = '<span class="tag out">ispao</span>';
+    else if (qi === 0) tag = '<span class="tag now">javio se</span>';
+    else if (qi > 0) tag = '<span class="tag">#' + (qi + 1) + '</span>';
+    const ctl = host
+      ? `<span class="ctl">
+           <button class="mini" title="Promijeni bodove" onclick="adj('${p.id}')">±</button>
+           <button class="mini" title="Vrati u igru" onclick="send('host:revive','${p.id}')">↺</button>
+           <button class="mini" title="Ukloni" onclick="if(confirm('Ukloniti igrača?'))send('host:kick','${p.id}')">✕</button>
+         </span>` : '';
+    const cls = ['row-p', p.out ? 'outp' : '', qi === 0 ? 'cur' : '', p.online ? '' : 'off', p.id === myId && role === 'player' ? 'mine' : ''].join(' ');
+    return `<div class="${cls}"><span class="rank">${i + 1}.</span><span class="nm">${esc(p.name)}</span>${tag}<span class="hrt">${hearts(p)}</span><span class="sc">${p.score}</span>${ctl}</div>`;
+  }).join('');
+}
+
+function adj(id) {
+  const v = prompt('Promjena bodova (npr. 100 ili -100):');
+  if (v) send('host:adjust', id, parseInt(v, 10));
+}
+function addQ() {
+  const q = $('#nq').value.trim(), a = $('#na').value.trim();
+  if (!q || !a) return alert('Upiši pitanje i odgovor.');
+  send('host:addq', { q, a, points: $('#np').value });
+  $('#nq').value = ''; $('#na').value = '';
+}
+
+// ---------- igrač ----------
+function buzz() {
+  send('player:buzz');
+  if (navigator.vibrate) navigator.vibrate(60);
+}
+
+function render() {
+  if (!S) return;
+  if (role === 'player') renderPlayer();
+  else if (role === 'host') renderHost();
+  else if (role === 'display') renderDisplay();
+}
+
+function renderPlayer() {
+  const me = S.players.find(p => p.id === myId);
+  if (!me) return;
+  const r = S.round, qpos = r.queue.indexOf(me.id), locked = r.locked.includes(me.id);
+  $('#pName').textContent = me.name;
+  $('#pScore').textContent = me.score;
+  $('#pLives').textContent = hearts(me);
+  let st = '', label = 'ČEKAJ', can = false, hot = false;
+  if (me.out) { st = 'Ispao/la si iz igre, ali možeš gledati.'; label = 'ISPAO/LA'; }
+  else if (r.phase === 'idle') st = 'Čekaj prvo pitanje…';
+  else if (r.phase === 'ready') st = `Pitanje za ${r.points} bodova. Čekaj da host otvori javljanje.`;
+  else if (r.phase === 'open') {
+    if (qpos === 0) { st = 'TI ODGOVARAJ!'; label = 'ODGOVARAJ'; hot = true; }
+    else if (qpos > 0) { st = `Javio/la si se, u redu si (#${qpos + 1}).`; label = 'JAVIO/LA SI SE'; }
+    else if (locked) { st = 'Već si pogriješio/la na ovom pitanju.'; label = 'ZAKLJUČANO'; }
+    else { st = `Pitanje za ${r.points} bodova`; label = 'JAVI SE'; can = true; }
+  } else {
+    st = r.result + (r.answer ? ' Odgovor: ' + r.answer : '');
+  }
+  $('#pStatus').textContent = st;
+  const b = $('#buzz');
+  b.textContent = label;
+  b.disabled = !can;
+  b.classList.toggle('hot', hot);
+  $('#pNote').textContent = r.note || '';
+  $('#pBoard').innerHTML = lb(false);
+}
+
+// ---------- host ----------
+function renderHost() {
+  const r = S.round, q = S.questions[S.qi];
+  let h = '';
+  if (!q) {
+    h = '<p class="muted">Izaberi pitanje iz liste ispod i klikni „Pokreni“.</p>';
+  } else {
+    const canJudge = r.phase === 'open' && r.queue.length > 0;
+    h += `<span class="badge ${r.phase}">${phaseName[r.phase]}</span> <span class="muted">${q.points} bodova</span>`;
+    h += `<div class="bigq">${esc(r.question || q.q)}</div>`;
+    if (r.answer) h += `<div class="ans"><b>Tačan odgovor:</b> ${esc(r.answer)}</div>`;
+    h += `<div class="row">
+      <button class="btn" ${r.phase === 'ready' ? '' : 'disabled'} onclick="send('host:open')">Otvori javljanje</button>
+      <button class="btn ghost" onclick="send('host:reveal')">Prikaži odgovor</button>
+    </div>`;
+    if (r.phase === 'open') {
+      h += '<h3 style="margin-top:18px">Javili su se</h3>';
+      h += r.queue.length
+        ? r.queue.map((id, i) => `<div class="buz ${i === 0 ? 'first' : ''}">${i + 1}. ${esc(nm(id))}</div>`).join('')
+        : '<p class="muted">Čekam da se neko javi…</p>';
+    }
+    h += `<div class="row">
+      <button class="btn good" ${canJudge ? '' : 'disabled'} onclick="send('host:correct')">Tačno</button>
+      <button class="btn bad" ${canJudge ? '' : 'disabled'} onclick="send('host:wrong')">Netačno</button>
+      <button class="btn ghost" ${r.phase === 'ready' || r.phase === 'open' ? '' : 'disabled'} onclick="send('host:skip')">Niko nije znao</button>
+    </div>`;
+    if (r.note) h += `<p class="muted" style="margin-top:12px">${esc(r.note)}</p>`;
+    if (r.phase === 'done') h += `<p style="margin-top:12px"><b>${esc(r.result)}</b></p>`;
+  }
+  $('#hCur').innerHTML = h;
+  $('#hQs').innerHTML = S.questions.map((x, i) =>
+    `<div class="qi ${x.used ? 'used' : ''}"><span>${i + 1}. ${esc(x.q)}<small>${x.points}</small></span><button class="mini" onclick="send('host:pick',${i})">Pokreni</button></div>`
+  ).join('');
+  $('#hCount').textContent = 'Igrači (' + S.players.length + ')';
+  $('#hBoard').innerHTML = lb(true);
+}
+
+// ---------- prikaz liste ----------
+function renderDisplay() {
+  const r = S.round;
+  $('#dInfo').textContent = r.phase === 'open' || r.phase === 'ready' ? `Pitanje za ${r.points} bodova` : '';
+  $('#dBoard').innerHTML = lb(false);
+}
+
+// početno stanje: ako je sesija sačuvana, čekaj 'connect' da se ponovo prijavi
+if (role === 'display') go('display');
+</script>
+</body>
+</html>
