@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kviz: Stepski vuk</title>
+<style>
+  :root {
+    --bg: #14110f;
+    --card: #1f1a17;
+    --text: #efe6d8;
+    --muted: #a39683;
+    --accent: #c9822b;
+    --good: #5f9e6e;
+    --bad: #b5524a;
+    --border: #3a312b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at top, #2a211b 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+  }
+  .card {
+    width: 100%;
+    max-width: 680px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  }
+  h1 { margin: 0 0 4px; font-size: 2rem; letter-spacing: 1px; color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 24px; font-style: italic; }
+  .bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .bar div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+  .count { color: var(--muted); font-size: .9rem; margin-bottom: 18px; }
+  .q { font-size: 1.3rem; line-height: 1.4; margin-bottom: 20px; }
+  .opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font: inherit;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .1s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--accent); background: rgba(201,130,43,.08); transform: translateX(3px); }
+  .opt:disabled { cursor: default; }
+  .opt.correct { border-color: var(--good); background: rgba(95,158,110,.18); }
+  .opt.wrong { border-color: var(--bad); background: rgba(181,82,74,.18); }
+  .explain {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--accent);
+    background: rgba(255,255,255,.03);
+    color: var(--muted);
+    line-height: 1.5;
+    display: none;
+  }
+  .btn {
+    margin-top: 20px;
+    background: var(--accent);
+    color: #1a120a;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 26px;
+    font: inherit;
+    font-weight: bold;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: filter .2s;
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .hidden { display: none; }
+  .result { text-align: center; }
+  .score { font-size: 3.2rem; color: var(--accent); margin: 10px 0; }
+  .msg { color: var(--muted); font-size: 1.1rem; line-height: 1.5; }
+  @media (max-width: 480px) { .card { padding: 22px; } h1 { font-size: 1.6rem; } .q { font-size: 1.15rem; } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="start">
+    <h1>Stepski vuk</h1>
+    <p class="sub">Hermann Hesse &middot; kviz za lektiru</p>
+    <p class="msg">13 pitanja o romanu. Odaberi jedan odgovor, odmah ćeš vidjeti je li tačan. Sretno!</p>
+    <button class="btn" onclick="startQuiz()">Počni kviz</button>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="bar"><div id="progress"></div></div>
+    <div class="count" id="count"></div>
+    <div class="q" id="question"></div>
+    <div id="options"></div>
+    <div class="explain" id="explain"></div>
+    <button class="btn hidden" id="next" onclick="nextQuestion()">Dalje</button>
+  </div>
+
+  <div id="result" class="result hidden">
+    <h1>Rezultat</h1>
+    <div class="score" id="score"></div>
+    <p class="msg" id="resultMsg"></p>
+    <button class="btn" onclick="startQuiz()">Pokušaj ponovo</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Ko je autor romana „Stepski vuk“?",
+    a: ["Thomas Mann", "Hermann Hesse", "Franz Kafka", "Stefan Zweig"],
+    c: 1,
+    e: "Roman je napisao njemačko-švicarski pisac Hermann Hesse."
+  },
+  {
+    q: "Koje godine je roman prvi put objavljen?",
+    a: ["1905.", "1927.", "1946.", "1962."],
+    c: 1,
+    e: "„Stepski vuk“ izlazi 1927. godine."
+  },
+  {
+    q: "Kako se zove glavni lik romana?",
+    a: ["Harry Haller", "Hermann Hesse", "Gustav Klein", "Pablo Mann"],
+    c: 0,
+    e: "Glavni lik je Harry Haller, usamljeni intelektualac u srednjim godinama."
+  },
+  {
+    q: "Šta simbolizira „stepski vuk“ u romanu?",
+    a: ["Životinju koju Harry drži kao kućnog ljubimca", "Usamljenika otuđenog od društva i građanskog života", "Ime Harryjeve knjige", "Policijskog pasa"],
+    c: 1,
+    e: "Stepski vuk je simbol čovjeka koji ne pripada društvu i građanskom svijetu."
+  },
+  {
+    q: "Koje dvije „duše“ se bore u Harryju?",
+    a: ["Dobra i zla", "Čovjek i vuk", "Umjetnik i vojnik", "Dječak i starac"],
+    c: 1,
+    e: "Harry osjeća da u njemu žive ljudska i vučja priroda koje se stalno sukobljavaju."
+  },
+  {
+    q: "Šta Harry planira učiniti na svoj 50. rođendan?",
+    a: ["Otputovati u inostranstvo", "Oženiti se", "Oduzeti sebi život", "Objaviti knjigu"],
+    c: 2,
+    e: "Harry sebi daje rok: ako mu život do 50. rođendana ne postane podnošljiv, okončat će ga."
+  },
+  {
+    q: "Ko je Hermine?",
+    a: ["Harryjeva majka", "Mlada žena koja ga uči plesati i uživati u životu", "Njegova bivša supruga", "Stanodavka u kojoj stanuje"],
+    c: 1,
+    e: "Hermine postaje Harryjeva vodilja: uči ga plesu, životnim radostima i otvara mu novi pogled na svijet."
+  },
+  {
+    q: "Čime se bavi Pablo?",
+    a: ["Slika portrete", "Svira saksofon", "Predaje na univerzitetu", "Radi kao konobar"],
+    c: 1,
+    e: "Pablo je saksofonist i Hermineina prijateljica/prijatelj iz društva, vezan za svijet muzike i užitka."
+  },
+  {
+    q: "Šta piše na ulazu u Magično kazalište?",
+    a: ["Samo za odabrane", "Ulaz zabranjen", "Samo za lude", "Dobrodošli u snove"],
+    c: 2,
+    e: "Natpis „Samo za lude“ najavljuje čudan, nadrealan svijet unutar Magičnog kazališta."
+  },
+  {
+    q: "Ko objavljuje Harryjeve zapise nakon što on nestane?",
+    a: ["Njegov izdavač", "Hermine", "Nećak njegove stanodavke", "Pablo"],
+    c: 2,
+    e: "Zapise objavljuje stanodavkin nećak, koji ih je dobio od Harryja i napisao uvod."
+  },
+  {
+    q: "Koga Harry u Magičnom kazalištu sreće kao uzor humora i životne lakoće?",
+    a: ["Mozarta", "Napoleona", "Sokrata", "Shakespearea"],
+    c: 0,
+    e: "Harry susreće Mozarta, koji ga uči da se smije i da život prihvati s humorom."
+  },
+  {
+    q: "Šta Harry uradi Hermine u Magičnom kazalištu?",
+    a: ["Poljubi je i zaprosi", "Ubode je nožem", "Ostavi je i pobjegne", "Spasi je od Pabla"],
+    c: 1,
+    e: "Harry u zanosu ubode Hermine. Zbog toga mora pred sud, gdje biva osuđen da se nauči smijati."
+  },
+  {
+    q: "Kojom nagradom je Hermann Hesse nagrađen 1946. godine?",
+    a: ["Pulitzerovom", "Nobelovom za književnost", "Goncourtovom", "Bookerovom"],
+    c: 1,
+    e: "Hesse je 1946. dobio Nobelovu nagradu za književnost."
+  }
+];
+
+let idx = 0, score = 0, answered = false;
+
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove("hidden");
+const hide = id => $(id).classList.add("hidden");
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  idx = 0; score = 0;
+  hide("start"); hide("result"); show("quiz");
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  const item = questions[idx];
+  $("count").textContent = "Pitanje " + (idx + 1) + " od " + questions.length;
+  $("progress").style.width = (idx / questions.length * 100) + "%";
+  $("question").textContent = item.q;
+  $("explain").style.display = "none";
+  hide("next");
+  const correctText = item.a[item.c];
+  const box = $("options");
+  box.innerHTML = "";
+  shuffle(item.a).forEach(text => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = text;
+    b.onclick = () => choose(b, text === correctText, correctText);
+    box.appendChild(b);
+  });
+}
+
+function choose(btn, isCorrect, correctText) {
+  if (answered) return;
+  answered = true;
+  if (isCorrect) { score++; btn.classList.add("correct"); }
+  else { btn.classList.add("wrong"); }
+  document.querySelectorAll(".opt").forEach(o => {
+    o.disabled = true;
+    if (o.textContent === correctText) o.classList.add("correct");
+  });
+  const ex = $("explain");
+  ex.textContent = questions[idx].e;
+  ex.style.display = "block";
+  $("next").textContent = idx === questions.length - 1 ? "Prikaži rezultat" : "Dalje";
+  show("next");
+}
+
+function nextQuestion() {
+  idx++;
+  if (idx < questions.length) loadQuestion();
+  else finish();
+}
+
+function finish() {
+  hide("quiz"); show("result");
+  $("score").textContent = score + " / " + questions.length;
+  const p = score / questions.length;
+  let msg;
+  if (p === 1) msg = "Savršeno! Pravi si poznavalac Stepskog vuka.";
+  else if (p >= 0.75) msg = "Odlično! Roman si sigurno pažljivo čitao/la.";
+  else if (p >= 0.5) msg = "Dobro, ali vrijedi još jednom proći kroz ključne dijelove romana.";
+  else msg = "Hajde ponovo pročitaj sažetak i pokušaj opet, sigurno će ići bolje.";
+  $("resultMsg").textContent = msg;
+}
+</script>
+</body>
+</html>
